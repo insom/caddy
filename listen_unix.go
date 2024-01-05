@@ -28,9 +28,6 @@ import (
 	"os"
 	"sync/atomic"
 	"syscall"
-
-	"go.uber.org/zap"
-	"golang.org/x/sys/unix"
 )
 
 // reuseUnixSocket copies and reuses the unix domain socket (UDS) if we already
@@ -143,22 +140,6 @@ func listenReusable(ctx context.Context, lnKey string, network, address string, 
 
 	// other types, I guess we just return them directly
 	return ln, err
-}
-
-// reusePort sets SO_REUSEPORT. Ineffective for unix sockets.
-func reusePort(network, address string, conn syscall.RawConn) error {
-	if IsUnixNetwork(network) {
-		return nil
-	}
-	return conn.Control(func(descriptor uintptr) {
-		if err := unix.SetsockoptInt(int(descriptor), unix.SOL_SOCKET, unixSOREUSEPORT, 1); err != nil {
-			Log().Error("setting SO_REUSEPORT",
-				zap.String("network", network),
-				zap.String("address", address),
-				zap.Uintptr("descriptor", descriptor),
-				zap.Error(err))
-		}
-	})
 }
 
 type unixListener struct {
